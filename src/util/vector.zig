@@ -1,3 +1,5 @@
+const bnd = @import("bounds.zig");
+
 pub const vec2f = struct {
     x: f32 = 0.0,
     y: f32 = 0.0,
@@ -16,6 +18,13 @@ pub const vec4i = struct {
 };
 
 pub fn lerpVec2f(a: *vec2f, b: vec2f, t: f32) void {
+    a.x *= (1 - t);
+    a.y *= (1 - t);
+    a.x += (b.x * t);
+    a.y += (b.y * t);
+}
+
+pub fn lerpBounds(a: *bnd.bounds, b: vec2f, t: f32) void {
     a.x *= (1 - t);
     a.y *= (1 - t);
     a.x += (b.x * t);

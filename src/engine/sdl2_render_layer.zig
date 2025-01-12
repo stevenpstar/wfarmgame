@@ -2,10 +2,7 @@ const vec = @import("../util/vector.zig");
 const col = @import("../util/colours.zig");
 const bnd = @import("../util/bounds.zig");
 const std = @import("std");
-
-const sdl = @cImport({
-    @cInclude("SDL2/SDL.h");
-});
+const sdl = @import("../sdl.zig").c;
 
 pub fn setDrawColour(
     renderer: ?*sdl.SDL_Renderer,
@@ -64,17 +61,20 @@ pub fn renderTexture(
 }
 
 pub fn createTexture(renderer: ?*sdl.SDL_Renderer, filePath: []const u8) ?*sdl.SDL_Texture {
-    const surface = sdl.SDL_LoadBMP(filePath.ptr);
+    const surface = sdl.IMG_Load(filePath.ptr);
+    //    var s = sdl.SDL_LoadBMP(filePath.ptr);
     if (surface == null) {
         std.debug.print("Error loading image file\n", .{});
         return null;
     }
 
-    const texture = sdl.SDL_CreateTextureFromSurface(
-        renderer,
-        surface,
-    );
+    const tex = sdl.SDL_CreateTextureFromSurface(renderer, surface);
+
+    //    const texture = sdl.SDL_CreateTextureFromSurface(
+    //        renderer,
+    //        surface,
+    //    );
     _ = sdl.SDL_FreeSurface(surface);
 
-    return texture;
+    return tex;
 }
