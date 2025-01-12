@@ -7,11 +7,11 @@ pub const bounds = struct {
     h: f32 = 0.0,
 };
 
-pub fn pointOverlaps(point: v.vec2, b: bounds) bool {
-    return point.x >= b.position.x and
-        point.x <= b.position.x + b.size.x and
-        point.y >= b.position.y and
-        point.y <= b.position.y + b.size.y;
+pub fn pointOverlaps(point: v.vec2f, b: bounds) bool {
+    return point.x >= b.x and
+        point.x <= b.x + b.w and
+        point.y >= b.y and
+        point.y <= b.y + b.h;
 }
 
 pub fn boundsOverlap(a: bounds, b: bounds) bool {

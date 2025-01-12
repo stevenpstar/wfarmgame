@@ -11,9 +11,24 @@ const sdl = @cImport({
 pub fn main() !void {
     var quit: bool = false;
     var event: sdl.SDL_Event = undefined;
+    var delta_time: f32 = 0.0;
+    var tick_count: u32 = 0;
 
     const screenWidth = 640;
-    const screenHeight = 480;
+    const screenHeight = 360;
+    const resX = 1920;
+    const resY = 1080;
+    var mx: c_int = 0;
+    var my: c_int = 0;
+
+    // test bounds for res testing
+    const boundtest = bnd.bounds{
+        .x = screenWidth / 2 - 32,
+        .y = screenHeight / 2 - 32,
+        .w = 64,
+        .h = 64,
+    };
+    //
 
     _ = sdl.SDL_Init(sdl.SDL_INIT_VIDEO);
     defer sdl.SDL_Quit();
@@ -22,8 +37,8 @@ pub fn main() !void {
         "Engine",
         sdl.SDL_WINDOWPOS_UNDEFINED,
         sdl.SDL_WINDOWPOS_UNDEFINED,
-        screenWidth,
-        screenHeight,
+        resX,
+        resY,
         0,
     );
 
@@ -36,8 +51,13 @@ pub fn main() !void {
     );
     defer sdl.SDL_DestroyRenderer(renderer);
 
+    _ = sdl.SDL_RenderSetLogicalSize(renderer, screenWidth, screenHeight);
+
     const tex = rl.createTexture(renderer, "assets/logo.bmp");
     defer sdl.SDL_DestroyTexture(tex);
+
+    delta_time = @as(f32, @floatFromInt((sdl.SDL_GetTicks() - tick_count))) / 1000.0;
+    tick_count = sdl.SDL_GetTicks();
 
     while (!quit) {
         // Game Updating here
@@ -48,7 +68,7 @@ pub fn main() !void {
             renderer,
             tex,
             bnd.bounds{ .x = 0, .y = 0, .w = 64, .h = 64 },
-            vec.vec2f{ .x = 320 - 32, .y = 240 - 32 },
+            vec.vec2f{ .x = screenWidth / 2 - 32, .y = screenHeight / 2 - 32 },
         );
         rl.render(renderer);
 
@@ -56,7 +76,18 @@ pub fn main() !void {
 
         switch (event.type) {
             sdl.SDL_QUIT => quit = true,
+            sdl.SDL_MOUSEMOTION => {
+                mx = event.motion.x;
+                my = event.motion.y;
+            },
             else => {},
+        }
+
+        if (bnd.pointOverlaps(
+            vec.vec2f{ .x = @floatFromInt(mx), .y = @floatFromInt(my) },
+            boundtest,
+        )) {
+            std.debug.print("Overlapping logo\n", .{});
         }
     }
 }
