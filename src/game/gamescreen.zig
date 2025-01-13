@@ -18,6 +18,19 @@ const plot = bnd.bounds{
 
 var playmat = pm.playmat{};
 
+var deck = [10]crd.card_types{
+    crd.card_types.CARROT,
+    crd.card_types.CARROT,
+    crd.card_types.CARROT,
+    crd.card_types.CARROT,
+    crd.card_types.CARROT,
+    crd.card_types.WHEAT,
+    crd.card_types.WHEAT,
+    crd.card_types.WHEAT,
+    crd.card_types.WHEAT,
+    crd.card_types.WHEAT,
+};
+
 pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) bool {
     const textures_loaded = tex.loadTextures(renderer);
     if (textures_loaded == false) {
@@ -30,17 +43,32 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
     var mouse_pos = vec.vec2i{ .x = 0, .y = 0 };
 
     playmat.texture = tex.playmat_texture;
+
+    // TEST adding deck //
+
+    for (deck) |ctype| {
+        gamestate.deck.append(ctype) catch |err| {
+            std.debug.print("Could not add card type to deck, err: {}\n", .{err});
+            return false;
+        };
+    }
+
+    // draw initial hand
+    for (0..5) |_| {
+        gs.drawCard(gamestate);
+    }
     // TEST creating a carrot card //
-    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
-    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
-    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
+    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
+    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
+    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
 
     while (!quit_loop) {
         _ = sdl.SDL_PollEvent(&event);
         switch (event.type) {
             sdl.SDL_KEYDOWN => {
                 if (event.key.keysym.sym == 'd') {
-                    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
+                    gs.drawCard(gamestate);
+                    //                    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
                 }
             },
             sdl.SDL_QUIT => {
@@ -61,6 +89,8 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
                         card.bounds,
                     )) {
                         card.*.dragged = true;
+                        card.*.z_position = 1;
+                        gs.sortHand(gamestate);
                         break;
                     }
                 }
@@ -68,11 +98,15 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
             sdl.SDL_MOUSEBUTTONUP => {
                 for (gamestate.hand.items, 0..) |*card, i| {
                     if (card.*.dragged) {
-                        const played = gs.playCard(i, gamestate);
+                        const played = gs.playCard(
+                            i,
+                            gamestate,
+                            vec.vec2i{ .x = event.motion.x, .y = event.motion.y },
+                        );
                         if (!played) {
-                            std.debug.print("No room in hand\n", .{});
+                            card.*.dragged = false;
+                            card.*.z_position = 0;
                         }
-                        card.*.dragged = false;
                     }
                 }
             },

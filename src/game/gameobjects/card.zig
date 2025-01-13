@@ -7,6 +7,7 @@ const textures = @import("../textures.zig");
 pub const card_types = enum {
     NONE,
     CARROT,
+    WHEAT,
 };
 
 pub const card = struct {
@@ -18,6 +19,7 @@ pub const card = struct {
         .h = 96,
     },
     true_position: vec.vec2f = vec.vec2f{},
+    z_position: i32 = 0,
     hovered: bool = false,
     dragged: bool = false,
     texture: *sdl.SDL_Texture = undefined,
@@ -55,6 +57,13 @@ pub fn createCard(ct: card_types) card {
                 .texture = textures.carrot_card_texture,
             };
             return carrot_card;
+        },
+        card_types.WHEAT => {
+            const wheat_card = card{
+                .type = ct,
+                .texture = textures.wheat_card_texture,
+            };
+            return wheat_card;
         },
     }
 }

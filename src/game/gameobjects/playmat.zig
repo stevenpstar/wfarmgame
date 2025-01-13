@@ -7,18 +7,18 @@ pub const playmat = struct {
     bounds: bnd.bounds = bnd.bounds{
         .x = 0,
         .y = 0,
-        .w = 281,
+        .w = 316,
         .h = 128,
     },
     texture: *sdl.SDL_Texture = undefined,
     pub fn render(self: playmat, renderer: ?*sdl.SDL_Renderer) void {
-        const b = bnd.bounds{ .x = 0, .y = 0, .w = 281, .h = 128 };
+        const b = bnd.bounds{ .x = 0, .y = 0, .w = 316, .h = 128 };
 
         rl.renderTexture(
             renderer,
             self.texture,
             b,
-            vec.vec2f{ .x = 854 / 2 - (281 / 2), .y = 240 },
+            vec.vec2f{ .x = 854 / 2 - (316 / 2), .y = 240 },
         );
     }
 };
