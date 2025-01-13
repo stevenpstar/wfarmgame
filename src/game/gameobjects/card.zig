@@ -58,3 +58,23 @@ pub fn createCard(ct: card_types) card {
         },
     }
 }
+
+pub fn updateCard(c: *card, mouse_pos: vec.vec2i) void {
+    if (c.dragged) {
+        vec.lerpBounds(&c.bounds, vec.vec2f{
+            .x = @as(f32, @floatFromInt(mouse_pos.x - 32)),
+            .y = @as(f32, @floatFromInt(mouse_pos.y - 48)),
+        }, 0.005);
+    } else if (c.hovered) {
+        vec.lerpBounds(&c.bounds, vec.vec2f{
+            .x = c.true_position.x,
+            .y = c.true_position.y - 8,
+        }, 0.005);
+    } else {
+        vec.lerpBounds(&c.bounds, c.true_position, 0.002);
+    }
+    c.hovered = bnd.pointOverlaps(
+        vec.vec2f{ .x = @as(f32, @floatFromInt(mouse_pos.x)), .y = @as(f32, @floatFromInt(mouse_pos.y)) },
+        c.bounds,
+    );
+}

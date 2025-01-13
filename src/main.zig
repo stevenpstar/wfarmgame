@@ -4,6 +4,7 @@ const game = @import("game/gamescreen.zig");
 const sdl = @import("sdl.zig").c;
 const gs = @import("game/gamestate.zig");
 const c = @import("game/gameobjects/card.zig");
+const bnd = @import("util/bounds.zig");
 
 pub fn main() !void {
     var quit: bool = false;
@@ -18,11 +19,20 @@ pub fn main() !void {
     var gamestate = gs.game_state{
         .max_hand_count = 10,
         .draw_card_amount = 5,
+        .play_amount = 4,
         .hand = std.ArrayList(c.card).init(std.heap.page_allocator),
         .deck = std.ArrayList(c.card).init(std.heap.page_allocator),
+        .playmat = std.ArrayList(c.card).init(std.heap.page_allocator),
+        .playmat_bounds = bnd.bounds{
+            .x = 854 / 2 - (281 / 2),
+            .y = 240,
+            .w = 281,
+            .h = 128,
+        },
     };
     defer gamestate.hand.deinit();
     defer gamestate.deck.deinit();
+    defer gamestate.playmat.deinit();
 
     _ = sdl.SDL_Init(sdl.SDL_INIT_VIDEO);
     defer sdl.SDL_Quit();
