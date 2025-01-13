@@ -60,20 +60,10 @@ pub fn renderTexture(
     );
 }
 
-pub fn createTexture(renderer: ?*sdl.SDL_Renderer, filePath: []const u8) ?*sdl.SDL_Texture {
+pub fn createTexture(renderer: *sdl.SDL_Renderer, filePath: []const u8) ?*sdl.SDL_Texture {
     const surface = sdl.IMG_Load(filePath.ptr);
-    //    var s = sdl.SDL_LoadBMP(filePath.ptr);
-    if (surface == null) {
-        std.debug.print("Error loading image file\n", .{});
-        return null;
-    }
-
     const tex = sdl.SDL_CreateTextureFromSurface(renderer, surface);
 
-    //    const texture = sdl.SDL_CreateTextureFromSurface(
-    //        renderer,
-    //        surface,
-    //    );
     _ = sdl.SDL_FreeSurface(surface);
 
     return tex;

@@ -2,6 +2,8 @@ const std = @import("std");
 const rl = @import("engine/sdl2_render_layer.zig");
 const game = @import("game/gamescreen.zig");
 const sdl = @import("sdl.zig").c;
+const gs = @import("game/gamestate.zig");
+const c = @import("game/gameobjects/card.zig");
 
 pub fn main() !void {
     var quit: bool = false;
@@ -12,6 +14,15 @@ pub fn main() !void {
     const screenHeight = 480;
     const resX = 1920;
     const resY = 1080;
+
+    var gamestate = gs.game_state{
+        .max_hand_count = 10,
+        .draw_card_amount = 5,
+        .hand = std.ArrayList(c.card).init(std.heap.page_allocator),
+        .deck = std.ArrayList(c.card).init(std.heap.page_allocator),
+    };
+    defer gamestate.hand.deinit();
+    defer gamestate.deck.deinit();
 
     _ = sdl.SDL_Init(sdl.SDL_INIT_VIDEO);
     defer sdl.SDL_Quit();
@@ -43,6 +54,6 @@ pub fn main() !void {
     tick_count = sdl.SDL_GetTicks();
 
     while (!quit) {
-        quit = game.loop(delta_time, renderer);
+        quit = game.loop(delta_time, renderer, &gamestate);
     }
 }
