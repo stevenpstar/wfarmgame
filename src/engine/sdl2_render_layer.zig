@@ -34,6 +34,7 @@ pub fn renderTexture(
     tex: ?*sdl.SDL_Texture,
     bounds: bnd.bounds,
     pos: vec.vec2f,
+    scale: f32,
 ) void {
     const srcRect = sdl.SDL_Rect{
         .x = @intFromFloat(bounds.x),
@@ -45,8 +46,8 @@ pub fn renderTexture(
     const destRect = sdl.SDL_Rect{
         .x = @intFromFloat(pos.x),
         .y = @intFromFloat(pos.y),
-        .w = @intFromFloat(bounds.w),
-        .h = @intFromFloat(bounds.h),
+        .w = @intFromFloat(bounds.w * scale),
+        .h = @intFromFloat(bounds.h * scale),
     };
 
     _ = sdl.SDL_RenderCopyEx(

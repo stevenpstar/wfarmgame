@@ -11,6 +11,7 @@ pub const playmat = struct {
         .h = 128,
     },
     texture: *sdl.SDL_Texture = undefined,
+    scale: f32 = 1.0,
     pub fn render(self: playmat, renderer: ?*sdl.SDL_Renderer) void {
         const b = bnd.bounds{ .x = 0, .y = 0, .w = 316, .h = 128 };
 
@@ -19,6 +20,7 @@ pub const playmat = struct {
             self.texture,
             b,
             vec.vec2f{ .x = 854 / 2 - (316 / 2), .y = 240 },
+            self.scale,
         );
     }
 };

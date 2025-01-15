@@ -4,6 +4,7 @@ const game = @import("game/gamescreen.zig");
 const sdl = @import("sdl.zig").c;
 const gs = @import("game/gamestate.zig");
 const c = @import("game/gameobjects/card.zig");
+const pl = @import("game/gameobjects/plot.zig");
 const bnd = @import("util/bounds.zig");
 const ran = @import("util/random.zig");
 
@@ -31,6 +32,7 @@ pub fn main() !void {
         .play_amount = 4,
         .hand = std.ArrayList(c.card).init(std.heap.page_allocator),
         .deck = std.ArrayList(c.card_types).init(std.heap.page_allocator),
+        .gameplots = std.ArrayList(pl.gameplot).init(std.heap.page_allocator),
         .playmat = std.ArrayList(c.card).init(std.heap.page_allocator),
         .playmat_bounds = bnd.bounds{
             .x = 854 / 2 - (316 / 2),
@@ -41,6 +43,7 @@ pub fn main() !void {
     };
     defer gamestate.hand.deinit();
     defer gamestate.deck.deinit();
+    defer gamestate.gameplots.deinit();
     defer gamestate.playmat.deinit();
 
     _ = sdl.SDL_Init(sdl.SDL_INIT_VIDEO);

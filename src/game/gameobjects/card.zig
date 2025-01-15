@@ -23,6 +23,8 @@ pub const card = struct {
     hovered: bool = false,
     dragged: bool = false,
     texture: *sdl.SDL_Texture = undefined,
+    scale: f32 = 1.0,
+    target_scale: f32 = 1.0,
     pub fn render(self: card, renderer: ?*sdl.SDL_Renderer) void {
         // If not a real card entry in hand
         if (self.type == card_types.NONE) {
@@ -39,6 +41,7 @@ pub const card = struct {
             self.texture,
             b,
             vec.vec2f{ .x = self.bounds.x, .y = self.bounds.y },
+            self.scale,
         );
     }
 };
@@ -70,9 +73,11 @@ pub fn createCard(ct: card_types) card {
 
 pub fn updateCard(c: *card, mouse_pos: vec.vec2i) void {
     if (c.dragged) {
+        const c_half_width = @as(i32, @intFromFloat((c.bounds.w / 2) * c.scale));
+        const c_half_height = @as(i32, @intFromFloat((c.bounds.h / 2) * c.scale));
         vec.lerpBounds(&c.bounds, vec.vec2f{
-            .x = @as(f32, @floatFromInt(mouse_pos.x - 32)),
-            .y = @as(f32, @floatFromInt(mouse_pos.y - 48)),
+            .x = @as(f32, @floatFromInt(mouse_pos.x - c_half_width)),
+            .y = @as(f32, @floatFromInt(mouse_pos.y - c_half_height)),
         }, 0.005);
     } else if (c.hovered) {
         vec.lerpBounds(&c.bounds, vec.vec2f{
@@ -86,4 +91,10 @@ pub fn updateCard(c: *card, mouse_pos: vec.vec2i) void {
         vec.vec2f{ .x = @as(f32, @floatFromInt(mouse_pos.x)), .y = @as(f32, @floatFromInt(mouse_pos.y)) },
         c.bounds,
     );
+    if (c.dragged) {
+        c.target_scale = 1.1;
+    } else {
+        c.target_scale = 1.0;
+    }
+    vec.lerpf(&c.scale, c.target_scale, 0.002);
 }

@@ -1,4 +1,5 @@
 const c = @import("gameobjects/card.zig");
+const pl = @import("gameobjects/plot.zig");
 const bnd = @import("../util/bounds.zig");
 const vec = @import("../util/vector.zig");
 const rnd = @import("../util/random.zig");
@@ -10,6 +11,7 @@ pub const game_state = struct {
     play_amount: i32 = 4,
     hand: std.ArrayList(c.card),
     deck: std.ArrayList(c.card_types),
+    gameplots: std.ArrayList(pl.gameplot),
     playmat: std.ArrayList(c.card),
     playmat_bounds: bnd.bounds,
     fn repositionHand(self: game_state) void {
@@ -19,6 +21,60 @@ pub const game_state = struct {
         for (self.hand.items, 0..) |*card, i| {
             card.*.true_position.x = center + (@as(f32, @floatFromInt(i)) * 65) - (@as(f32, @floatFromInt(self.hand.items.len)) * 65 / 2);
             card.*.true_position.y = 380;
+        }
+    }
+    pub fn goNextPlot(self: *game_state) void {
+        const plot_left_position: f32 = 854 / 2 - (854 / 8) - (256 / 2);
+        const plot_right_position: f32 = 854 - (854 / 4) - (256 / 2);
+        const plot_active_position: f32 = 854 / 2 - (256 / 2);
+
+        var target_i: usize = 0;
+        for (self.gameplots.items, 0..) |plot, i| {
+            if (plot.active) {
+                target_i = i + 1;
+                if (target_i >= self.gameplots.items.len) {
+                    // loop back
+                    target_i = 0;
+                }
+                break;
+            }
+        }
+        for (self.gameplots.items, 0..) |*plot, i| {
+            if (i == target_i) {
+                plot.*.active = true;
+                plot.*.target_scale = 1.0;
+                plot.*.true_position.x = plot_active_position;
+            } else if (target_i == 0) {
+                if (i == self.gameplots.items.len - 1) {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_right_position;
+                } else {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_left_position;
+                }
+            } else if (target_i == self.gameplots.items.len - 1) {
+                if (i == 0) {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_left_position;
+                } else {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_right_position;
+                }
+            } else {
+                if (i < target_i) {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_right_position;
+                } else {
+                    plot.*.active = false;
+                    plot.*.target_scale = 0.5;
+                    plot.*.true_position.x = plot_left_position;
+                }
+            }
         }
     }
 };

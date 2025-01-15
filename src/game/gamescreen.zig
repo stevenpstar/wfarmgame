@@ -6,17 +6,13 @@ const sdl = @import("../sdl.zig").c;
 const std = @import("std");
 const crd = @import("gameobjects/card.zig");
 const pm = @import("gameobjects/playmat.zig");
+const pl = @import("gameobjects/plot.zig");
 const tex = @import("textures.zig");
 const gs = @import("gamestate.zig");
-
-const plot = bnd.bounds{
-    .x = 160,
-    .y = 60,
-    .w = 320,
-    .h = 100,
-};
+const buttons = @import("ui/buttons.zig");
 
 var playmat = pm.playmat{};
+var play_button = buttons.button_play_hand{};
 
 var deck = [10]crd.card_types{
     crd.card_types.CARROT,
@@ -43,6 +39,39 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
     var mouse_pos = vec.vec2i{ .x = 0, .y = 0 };
 
     playmat.texture = tex.playmat_texture;
+    play_button.texture = tex.play_button_texture;
+
+    var gplot1 = pl.gameplot{
+        .played_cards = std.ArrayList(crd.card).init(std.heap.page_allocator),
+    };
+    gplot1.texture = tex.plot2_texture;
+    gplot1.active = true;
+
+    var gplot2 = pl.gameplot{
+        .played_cards = std.ArrayList(crd.card).init(std.heap.page_allocator),
+    };
+    gplot2.true_position = vec.vec2f{ .x = 854 / 2 - (854 / 8) - (256 / 2), .y = 0 };
+    gplot2.texture = tex.plot2_texture;
+
+    var gplot3 = pl.gameplot{
+        .played_cards = std.ArrayList(crd.card).init(std.heap.page_allocator),
+    };
+    gplot3.true_position = vec.vec2f{ .x = 854 - (854 / 4) - (256 / 2), .y = 0 };
+    gplot3.texture = tex.plot2_texture;
+    // deinit plot played cards
+    defer gplot1.played_cards.deinit();
+    defer gplot2.played_cards.deinit();
+    defer gplot3.played_cards.deinit();
+
+    gamestate.gameplots.append(gplot1) catch {
+        return false;
+    };
+    gamestate.gameplots.append(gplot2) catch {
+        return false;
+    };
+    gamestate.gameplots.append(gplot3) catch {
+        return false;
+    };
 
     // TEST adding deck //
 
@@ -57,10 +86,6 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
     for (0..5) |_| {
         gs.drawCard(gamestate);
     }
-    // TEST creating a carrot card //
-    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
-    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
-    // _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
 
     while (!quit_loop) {
         _ = sdl.SDL_PollEvent(&event);
@@ -68,7 +93,8 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
             sdl.SDL_KEYDOWN => {
                 if (event.key.keysym.sym == 'd') {
                     gs.drawCard(gamestate);
-                    //                    _ = gs.addCardToHand(crd.createCard(crd.card_types.CARROT), gamestate);
+                } else if (event.key.keysym.sym == 'p') {
+                    gamestate.goNextPlot();
                 }
             },
             sdl.SDL_QUIT => {
@@ -92,6 +118,31 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
                         card.*.z_position = 1;
                         gs.sortHand(gamestate);
                         break;
+                    }
+                }
+
+                if (bnd.pointOverlaps(
+                    vec.vec2f{
+                        .x = @as(f32, @floatFromInt(event.motion.x)),
+                        .y = @as(f32, @floatFromInt(event.motion.y)),
+                    },
+                    play_button.bounds,
+                )) {
+                    var i: usize = gamestate.playmat.items.len;
+                    // For now we are just removing cards, but we should eventually do something with them
+                    var active_plot: *pl.gameplot = undefined;
+                    for (gamestate.gameplots.items) |*plot| {
+                        if (plot.active) {
+                            active_plot = plot;
+                            break;
+                        }
+                    }
+                    while (i > 0) {
+                        i -= 1;
+                        const c = gamestate.playmat.orderedRemove(i);
+                        active_plot.played_cards.append(c) catch {
+                            std.debug.print("Could not play card\n", .{});
+                        };
                     }
                 }
             },
@@ -127,18 +178,45 @@ fn update(delta: f32, mouse_pos: vec.vec2i, gamestate: *gs.game_state) void {
     for (gamestate.playmat.items) |*card| {
         crd.updateCard(card, mouse_pos);
     }
+
+    for (gamestate.gameplots.items) |*plot| {
+        vec.lerpf(&plot.scale, plot.target_scale, 0.002);
+        vec.lerpVec2f(&plot.position, plot.true_position, 0.002);
+        for (plot.played_cards.items, 0..) |*p_card, i| {
+            p_card.*.true_position.x = plot.true_position.x + (128 * plot.scale) - (32 * p_card.scale) + (@as(f32, @floatFromInt(i)) * 8);
+            p_card.*.true_position.y = plot.true_position.y + (64 * plot.scale) - (32 * p_card.scale);
+            p_card.*.target_scale = plot.target_scale / 2.0;
+            vec.lerpBounds(&p_card.bounds, p_card.true_position, 0.004);
+            vec.lerpf(&p_card.scale, p_card.target_scale, 0.004);
+        }
+    }
 }
 
 fn render(renderer: ?*sdl.SDL_Renderer, gamestate: *gs.game_state) void {
     rl.setDrawColour(renderer, col.BLACK);
     rl.renderClear(renderer);
 
+    // render plot (test)
+    for (gamestate.gameplots.items) |*plot| {
+        if (plot.active) {
+            plot.*.target_scale = 1.0;
+        } else {
+            plot.*.target_scale = 0.5;
+        }
+        plot.render(renderer);
+        for (plot.played_cards.items) |*p_card| {
+            p_card.render(renderer);
+        }
+    }
     // render mat
     playmat.render(renderer);
 
     for (gamestate.playmat.items) |card| {
         card.render(renderer);
     }
+
+    // render UI
+    play_button.render(renderer);
 
     // Render cards
     for (gamestate.hand.items) |card| {

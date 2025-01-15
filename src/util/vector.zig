@@ -24,6 +24,11 @@ pub fn lerpVec2f(a: *vec2f, b: vec2f, t: f32) void {
     a.y += (b.y * t);
 }
 
+pub fn lerpf(a: *f32, b: f32, t: f32) void {
+    a.* *= (1 - t);
+    a.* += (b * t);
+}
+
 pub fn lerpBounds(a: *bnd.bounds, b: vec2f, t: f32) void {
     a.x *= (1 - t);
     a.y *= (1 - t);
