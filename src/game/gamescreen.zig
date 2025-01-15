@@ -120,6 +120,22 @@ pub fn loop(delta: f32, renderer: *sdl.SDL_Renderer, gamestate: *gs.game_state) 
                         break;
                     }
                 }
+                var playmat_card_index: usize = 0;
+                var clicked_on_card: bool = false;
+                for (gamestate.playmat.items, 0..) |card, i| {
+                    if (bnd.pointOverlaps(vec.vec2f{
+                        .x = @as(f32, @floatFromInt(event.motion.x)),
+                        .y = @as(f32, @floatFromInt(event.motion.y)),
+                    }, card.bounds)) {
+                        playmat_card_index = i;
+                        clicked_on_card = true;
+                        break;
+                    }
+                }
+                if (clicked_on_card) {
+                    const retrieved_card = gamestate.playmat.orderedRemove(playmat_card_index);
+                    _ = gs.addCardToHand(retrieved_card, gamestate);
+                }
 
                 if (bnd.pointOverlaps(
                     vec.vec2f{
